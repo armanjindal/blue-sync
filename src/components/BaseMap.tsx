@@ -3,9 +3,12 @@
 import { createClient } from '@/lib/supabase/client';
 
 import Map, {  GeolocateControl, Source, Layer, useMap} from 'react-map-gl';
+import SearchBar from '@/components/SearchBar';
+import EventCard from '@/components/EventCard';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useCallback, useEffect } from 'react';
 import toGeoJSONHelper from '@/lib/toGeoJSON';
+
 import type {CircleLayer} from 'react-map-gl';
 import type {FeatureCollection} from 'geojson';
 
@@ -45,6 +48,7 @@ function BaseMap() {
 
   // const {current: map} = useMap();
   const [hoverInfo, setHoverInfo] = useState(null);
+  const [imageURL, setImageUR] = useState(null);
 
   const onHover = useCallback(event => {
     const {
@@ -63,7 +67,8 @@ function BaseMap() {
           const { data: fetchedData, error } = await supabase
               .from('results')
               .select('*');
-
+            // TODO: only show events after now
+            // TODO: create a basic ranking based on proximity & PostGIS
           if (error) {
               console.error('Error fetching data:', error);
               return;
@@ -85,23 +90,18 @@ function BaseMap() {
     // onClick={layerClick} //Add once the interactive element is added
     interactiveLayerIds={['data']}
   >
+  < SearchBar />
+
   <GeolocateControl position="top-right" />
   <Source type="geojson" data={geoJSON}>
         <Layer {...layerStyle} />
       </Source>
 
-  {hoverInfo && (
-     <div className="relative z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    {hoverInfo && (
+     <div className="relative max-w-lg rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
       style={{top: `${hoverInfo.y}px`, left: `${hoverInfo.x}px`}}
     >
-      <HoverCard>
-      <HoverCardTrigger>Hover</HoverCardTrigger>
-      <HoverCardContent>
-        The React Framework – created and maintained by @vercel.
-      </HoverCardContent>
-      </HoverCard>
-        <p> TEST!!! </p>
-        <div>Title: {hoverInfo.feature.properties.title}</div>
+      < EventCard features={hoverInfo.feature.properties} image_urls={hoverInfo}/> 
       </div>
     )}
 
